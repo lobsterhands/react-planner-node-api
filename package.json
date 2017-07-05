@@ -1,7 +1,7 @@
 {
-  "name": "conduit-node",
+  "name": "react-planner-node",
   "version": "1.0.0",
-  "description": "conduit on node",
+  "description": "react planner on node",
   "main": "app.js",
   "scripts": {
     "start": "node ./app.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gothinkster/productionready-node-api.git"
+    "url": "git+https://github.com/lobsterhands/react-planner-node-api.git"
   },
   "license": "ISC",
   "dependencies": {
