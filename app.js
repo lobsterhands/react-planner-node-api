@@ -40,8 +40,9 @@ if(isProduction){
 
 // Register Mongoose DB Models
 require('./models/User');
+require('./models/Activity');
 
-// Register passport
+// Register passport middleware
 require('./config/passport');
 
 app.use(require('./routes'));
