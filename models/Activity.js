@@ -10,8 +10,7 @@ var ActivitySchema = new mongoose.Schema({
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, {timestamps: true});
 
-ActivitySchema.methods.toJSON = function(){
-  console.log('\nTHIS: %s', this);
+ActivitySchema.methods.toJSON = function() {
   return {
     id: this._id,
     title: this.title,
@@ -21,7 +20,8 @@ ActivitySchema.methods.toJSON = function(){
     dateEnd: this.dateEnd,
     tagList: this.tagList,
     createdAt: this.createdAt,
-    updatedAt: this.updatedAt
+    updatedAt: this.updatedAt,
+    author: this.author.toJSON()
   };
 };
 

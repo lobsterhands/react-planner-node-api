@@ -5,8 +5,24 @@ var Activity = mongoose.model('Activity');
 var User = mongoose.model('User');
 var auth = require('../auth');
 
+// TODO: Does the current setup allow any logged in user to find any activity by id?
+// If so, I need to someone ensure that the author === current user before returning
+// the activity
+router.param('activity', function(req, res, next, id) {
+	Activity.findOne({_id: id})
+		.populate('author')
+		.then(function (activity) {
+		if (!activity) { return res.sendStatus(404); }
+
+		req.activity = activity;
+
+		return next();
+	}).catch(next);
+});
+
+
 router.post('/', auth.required, function(req, res, next) {
-  User.findById(req.payload.id).then(function(user){
+  User.findById(req.payload.id).then(function(user) {
     if (!user) { return res.sendStatus(401); }
 
     var activity = new Activity(req.body.activity);
@@ -19,36 +35,26 @@ router.post('/', auth.required, function(req, res, next) {
   }).catch(next);
 });
 
-// TODO: Does the current setup allow any logged in user to find any activity by id?
-// If so, I need to someone ensure that the author === current user before returning
-// the activity
-router.param('activity', auth.required, function(req, res, next, id) {
-  console.log('\nID: %s', id);
-  activity.findOne({ _id: id})
-    .populate('author') // TODO: Do I really need to populate the author if the activity is just for a specific user?
-    // Or is the author used for the router.get and router.put actions?
-    .then(function (activity) {
-      if (!activity) { return res.sendStatus(404); }
-
-      req.activity = activity;
-
-      return next();
-    }).catch(next);
-});
-
 router.get('/:activity', auth.required, function(req, res, next) {
   Promise.all([
     req.payload ? User.findById(req.payload.id) : null,
     req.activity.populate('author').execPopulate()
-  ]).then(function(results){
+  ]).then(function(results) {
     var user = results[0];
 
-    return res.json({activity: req.activity.toJSONFor(user)});
+    console.log('\nUSER: %s\n', user._id);
+
+    if (req.activity.author._id.toString() === user._id.toString()) {
+      return res.json({activity: req.activity.toJSON()});
+    } else {
+      return res.sendStatus(401);
+    }
   }).catch(next);
 });
 
 router.put('/:activity', auth.required, function(req, res, next) {
-  User.findById(req.payload.id).then(function(user){
+  User.findById(req.payload.id).then(function(user) {
+
     if(req.activity.author._id.toString() === req.payload.id.toString()){
 
       if(typeof req.body.activity.title !== 'undefined'){
@@ -78,8 +84,9 @@ router.put('/:activity', auth.required, function(req, res, next) {
         req.activity.completed = req.body.activity.completed;
       }
 
+
       req.activity.save().then(function(activity){
-        return res.json({activity: activity.toJSONFor()});
+        return res.json({activity: activity.toJSON()});
       }).catch(next);
     } else {
       return res.sendStatus(403);
@@ -98,5 +105,59 @@ router.delete('/:activity', auth.required, function(req, res, next) {
     }
   });
 });
+
+/*
+	Endpoint to list all articles
+*/
+router.get('/', auth.required, function(req, res, next) {
+  var query = {};
+  var limit = 20;
+  var offset = 0;
+
+  if(typeof req.query.limit !== 'undefined') {
+    limit = req.query.limit;
+  }
+
+  if(typeof req.query.offset !== 'undefined') {
+    offset = req.query.offset;
+  }
+
+  if( typeof req.query.tag !== 'undefined' ) {
+    query.tagList = {"$in" : [req.query.tag]};
+  }
+
+  Promise.all([
+    req.query.author ? User.findOne({username: req.query.author}) : null
+  ]).then(function(results){
+    var author = results[0];
+
+    if(author) {
+      query.author = author._id;
+    }
+
+    return Promise.all([
+      Activity.find(query)
+        .limit(Number(limit))
+        .skip(Number(offset))
+        .sort({createdAt: 'desc'})
+        .populate('author')
+        .exec(),
+      Activity.count(query).exec(),
+      req.payload ? User.findById(req.payload.id) : null,
+    ]).then(function(results) {
+      var activities = results[0];
+      var activitiesCount = results[1];
+      var user = results[2];
+
+      return res.json({
+        activities: activities.map(function(activity) {
+          return activity.toJSON();
+        }),
+        activitiesCount: activitiesCount
+      });
+    });
+  }).catch(next);
+});
+
 
 module.exports = router;
