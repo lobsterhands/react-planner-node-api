@@ -28,6 +28,7 @@ router.post('/', auth.required, function(req, res, next) {
     var activity = new Activity(req.body.activity);
 
     activity.author = user;
+		activity.completed = false;
 
     return activity.save().then(function(){
       return res.json({activity: activity.toJSON()});
