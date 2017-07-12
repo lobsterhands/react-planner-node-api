@@ -15,3 +15,8 @@ back-end.
 | `npm install` | Installs all dependencies. (Windows: may need to run 'npm install --dev' to also install dev dependencies) |
 | `npm run start` | Starts development server without hot reloading. |
 | `npm run dev` | Starts development server with hot reloading using nodemon. |
+
+## Postman
+
+If you would like to use [Postman](https://www.getpostman.com/ "Postman API Testing"), you can find a collection to test the endpoints and attributes that currently exist
+in the /postman directory.
