@@ -55,7 +55,6 @@ router.post('/users/login', function (req, res, next) {
 	and to refresh the JWT token.
 */
 router.get('/user', auth.required, function (req, res, next) {
-	console.log('\nGET USER: ');
 	User.findById(req.payload.id).then(function (user) {
 		if (!user) {
 			return res.sendStatus(401);

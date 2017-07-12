@@ -42,8 +42,6 @@ router.get('/:activity', auth.required, function(req, res, next) {
   ]).then(function(results) {
     var user = results[0];
 
-    console.log('\nUSER: %s\n', user._id);
-
     if (req.activity.author._id.toString() === user._id.toString()) {
       return res.json({activity: req.activity.toJSON()});
     } else {
@@ -107,7 +105,7 @@ router.delete('/:activity', auth.required, function(req, res, next) {
 });
 
 /*
-	Endpoint to list all articles
+	Endpoint to list all articles for the current User
 */
 router.get('/', auth.required, function(req, res, next) {
   var query = {};
@@ -126,7 +124,7 @@ router.get('/', auth.required, function(req, res, next) {
     query.tagList = {"$in" : [req.query.tag]};
   }
 
-  Promise.all([
+  Promise.all([ // TODO: Do I need the outer promise for this project?
     req.query.author ? User.findOne({username: req.query.author}) : null
   ]).then(function(results){
     var author = results[0];
@@ -136,24 +134,24 @@ router.get('/', auth.required, function(req, res, next) {
     }
 
     return Promise.all([
-      Activity.find(query)
-        .limit(Number(limit))
-        .skip(Number(offset))
-        .sort({createdAt: 'desc'})
-        .populate('author')
-        .exec(),
-      Activity.count(query).exec(),
+			Activity.find({
+				$and: [
+					{'author': req.payload.id}, // Find where User matches author
+					query // AND search based on query parameters (tagList, etc)
+				]
+			}),
       req.payload ? User.findById(req.payload.id) : null,
     ]).then(function(results) {
       var activities = results[0];
-      var activitiesCount = results[1];
-      var user = results[2];
+      var activitiesCount = activities.length;
+      var user = results[1];
 
       return res.json({
         activities: activities.map(function(activity) {
           return activity.toJSON();
         }),
-        activitiesCount: activitiesCount
+        activitiesCount: activitiesCount,
+				user: user
       });
     });
   }).catch(next);
