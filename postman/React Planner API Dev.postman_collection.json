@@ -3,7 +3,7 @@
 	"info": {
 		"name": "React Planner API Dev",
 		"_postman_id": "d67b9677-289a-4549-07fd-7f1c02470b87",
-		"description": "Collection for testing the Conduit API\n\nhttps://github.com/gothinkster/realworld",
+		"description": "Collection for testing the React Planner API\n\nhttps://github.com/lobsterhands/react-planner-node-api",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
 	"item": [
