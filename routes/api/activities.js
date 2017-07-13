@@ -125,35 +125,25 @@ router.get('/', auth.required, function(req, res, next) {
     query.tagList = {"$in" : [req.query.tag]};
   }
 
-  Promise.all([ // TODO: Do I need the outer promise for this project?
-    req.query.author ? User.findOne({username: req.query.author}) : null
-  ]).then(function(results){
-    var author = results[0];
+  return Promise.all([
+		Activity.find({
+			$and: [
+				{'author': req.payload.id}, // Find where User matches author
+				query // AND search based on query parameters (tagList, etc)
+			]
+		}),
+    req.payload ? User.findById(req.payload.id) : null,
+  ]).then(function(results) {
+    var activities = results[0];
+    var activitiesCount = activities.length;
+    var user = results[1];
 
-    if(author) {
-      query.author = author._id;
-    }
-
-    return Promise.all([
-			Activity.find({
-				$and: [
-					{'author': req.payload.id}, // Find where User matches author
-					query // AND search based on query parameters (tagList, etc)
-				]
-			}),
-      req.payload ? User.findById(req.payload.id) : null,
-    ]).then(function(results) {
-      var activities = results[0];
-      var activitiesCount = activities.length;
-      var user = results[1];
-
-      return res.json({
-        activities: activities.map(function(activity) {
-          return activity.toJSON();
-        }),
-        activitiesCount: activitiesCount,
-				user: user
-      });
+    return res.json({
+      activities: activities.map(function(activity) {
+        return activity.toJSON();
+      }),
+      activitiesCount: activitiesCount,
+			user: user
     });
   }).catch(next);
 });
